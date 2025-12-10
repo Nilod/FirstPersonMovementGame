@@ -22,7 +22,6 @@ public class PlayerCam : MonoBehaviour
     void Update()
     {
         lookValue = lookAction.ReadValue<Vector2>();
-        Debug.Log($"{lookValue}");
 
         xRotation -= lookValue.y * sensitivity * Time.deltaTime;
         yRotation += lookValue.x * sensitivity * Time.deltaTime;
