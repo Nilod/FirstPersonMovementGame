@@ -13,7 +13,8 @@ public class PlayerMovement : MonoBehaviour
     private PlayerInput playerInput;
     private InputAction moveAction;
     private InputAction jumpAction;
-    private Vector2 moveValue;
+    private Vector2 moveInput;
+    private bool isJumping;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -28,56 +29,46 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        moveValue = moveAction.ReadValue<Vector2>();
+        
     }
 
     void FixedUpdate()
     {
-        Move();
-        if (jumpAction.triggered)
+        Vector3 targetVelocity = (moveInput.x * playerTransform.right + moveInput.y * playerTransform.forward) * moveSpeed;
+        Vector3 curentVelocity = playerRigidbody.linearVelocity;
+        curentVelocity.y = 0f; // Ignore y velocity
+        Vector3 velocityDif = targetVelocity - curentVelocity;
+        float accelRate = (targetVelocity.magnitude > 0f) ? acceleration : deceleration;
+
+        Vector3 force = velocityDif * accelRate;
+        //force.x = Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.x) + 1) * 0.5f*Mathf.Abs(velocityDif.x)) * Mathf.Sign(velocityDif.x);
+        //force.z = Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.z) + 1) * 0.5f*Mathf.Abs(velocityDif.z)) * Mathf.Sign(velocityDif.z);
+
+        playerRigidbody.AddForce(force, ForceMode.Force); // Add velocity to current velocity
+
+        if (isJumping && IsGrounded())
         {
-            Jump();
+            if (playerRigidbody.linearVelocity.y < -1f)
+            {
+                playerRigidbody.linearVelocity = new Vector3(playerRigidbody.linearVelocity.x, -1*Mathf.Log(Mathf.Abs(playerRigidbody.linearVelocity.y)), playerRigidbody.linearVelocity.z);
+            }
+            //playerRigidbody.linearVelocity = new Vector3(playerRigidbody.linearVelocity.x, 0, playerRigidbody.linearVelocity.z);
+            playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
     }
 
-    void Move()
+    public void OnMove(InputAction.CallbackContext context)
     {
-        //Vector3 moveDirection = moveValue.x * playerTransform.right + moveValue.y * playerTransform.forward;
-        //playerRigidbody.AddForce(moveDirection * moveSpeed, ForceMode.Force);
-
-        Vector3 targetVelocity = (moveValue.x * playerTransform.right + moveValue.y * playerTransform.forward) * moveSpeed;
-        Vector3 velocityDif = targetVelocity - playerRigidbody.linearVelocity;
-        velocityDif.y = 0; // Prevents affecting vertical velocity
-        float accelRate = (targetVelocity.magnitude > 0.1f) ? acceleration : deceleration;
-        /*
-        Vector3 force = new Vector3(Mathf.Pow(Mathf.Abs(velocityDif.x) * accelRate, 2) * Mathf.Sign(velocityDif.x),
-                                    0,
-                                    Mathf.Pow(Mathf.Abs(velocityDif.z) * accelRate, 2) * Mathf.Sign(velocityDif.z));
-        */
-        Vector3 force = Vector3.zero;
-        if (Mathf.Abs(velocityDif.x) > 0)
-        {
-            force.x = velocityDif.x * 0.2f;
-            //force.x = Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.x) + 1) * Mathf.Abs(velocityDif.x)) * Mathf.Sign(velocityDif.x);
-        }
-        if (Mathf.Abs(velocityDif.z) > 0)
-        {
-            force.z = velocityDif.z * 0.2f;
-            //force.z = Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.z) + 1) * Mathf.Abs(velocityDif.z)) * Mathf.Sign(velocityDif.z);
-        }
-
-        Debug.Log("Force.x: " + force.x + " Force.z: " + force.z);
-        /*
-        Vector3 force = new Vector3(Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.x)) * velocityDif) * Mathf.Sign(velocityDif.x),
-                                    0,
-                                    Mathf.Sqrt(Mathf.Log(Mathf.Abs(velocityDif.z)) * velocityDif.z) * Mathf.Sign(velocityDif.z));
-    */
-        playerRigidbody.AddForce(force, ForceMode.VelocityChange); // Add velocity to current velocity
+        moveInput = context.ReadValue<Vector2>();
     }
 
-    void Jump()
+    public void OnJump(InputAction.CallbackContext context)
     {
-        playerRigidbody.linearVelocity = new Vector3(playerRigidbody.linearVelocity.x, 0, playerRigidbody.linearVelocity.z);
-        playerRigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        isJumping = context.ReadValue<float>() > 0;
+    }
+
+    public bool IsGrounded()
+    {
+        return Physics.Raycast(playerTransform.position, Vector3.down, 1.1f);
     }
 }
