@@ -436,6 +436,8 @@ MonoBehaviour:
   acceleration: 5
   deceleration: 5
   jumpForce: 5
+  maxJumps: 0
+  maxSlopeAngle: 30
 --- !u!54 &542985231
 Rigidbody:
   m_ObjectHideFlags: 0
