@@ -413,7 +413,6 @@ GameObject:
   - component: {fileID: 542985231}
   - component: {fileID: 542985230}
   - component: {fileID: 542985236}
-  - component: {fileID: 542985237}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -438,9 +437,9 @@ MonoBehaviour:
   deceleration: 0.8
   jumpForce: 5
   maxJumps: 0
-  sphereRadius: 0.5
-  shpereRelativeHeight: -0.5
-  groundCheckDistance: 0.01
+  maxSlopeAngle: 30
+  sphereRadius: 0.4
+  groundCheckDistance: 10
 --- !u!54 &542985231
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -641,27 +640,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!135 &542985237
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 542985229}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.499
-  m_Center: {x: 0, y: -0.51, z: 0}
 --- !u!1 &617260937
 GameObject:
   m_ObjectHideFlags: 0
