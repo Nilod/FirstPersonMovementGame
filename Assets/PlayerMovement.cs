@@ -11,6 +11,10 @@ public class PlayerMovement : MonoBehaviour
     public float acceleration;
     public float deceleration;
 
+    [Header("Air Movement")]
+    public float airAcceleration;
+    public float airDeceleration;
+
     [Header("Jump")]
     public float jumpForce;
     public int maxAirJumps = 1;
@@ -65,7 +69,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            // AirMove();
+            AirMove();
             if (jumpRequested && airJumpsRemaining > 0)
             {
                 AirJump();
@@ -102,6 +106,26 @@ public class PlayerMovement : MonoBehaviour
         Vector3 velocityDif = targetVelocity - curentVelocity;
 
         float accelRate = (Vector3.Dot(curentVelocity, targetVelocity) > 0f) ? acceleration : deceleration; // 90° 
+
+        Vector3 force = new Vector3();
+        force.x = Mathf.Log(Mathf.Abs(velocityDif.x) + 1) * accelRate * Mathf.Sign(velocityDif.x);
+        force.z = Mathf.Log(Mathf.Abs(velocityDif.z) + 1) * accelRate * Mathf.Sign(velocityDif.z);
+        // sqrt(log(x+1)*a*x)
+
+        Vector3.ClampMagnitude(force, maxSpeedChange);
+
+        playerRigidbody.AddForce(force, ForceMode.VelocityChange); //ForceMode.Force, ForceMode.Acceleration, ForceMode.VelocityChange
+    }
+
+    public void AirMove()
+    {
+        Vector3 targetVelocity = new Vector3(moveInput.x, 0f, moveInput.y) * moveSpeed;
+        targetVelocity = playerTransform.TransformDirection(targetVelocity);
+        Vector3 curentVelocity = playerRigidbody.linearVelocity;
+        curentVelocity.y = 0f; // Ignore y velocity
+        Vector3 velocityDif = targetVelocity - curentVelocity;
+
+        float accelRate = (Vector3.Dot(curentVelocity, targetVelocity) > 0f) ? airAcceleration : airDeceleration; // 90° 
 
         Vector3 force = new Vector3();
         force.x = Mathf.Log(Mathf.Abs(velocityDif.x) + 1) * accelRate * Mathf.Sign(velocityDif.x);
