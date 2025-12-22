@@ -5,6 +5,12 @@ using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    private Transform playerTransform;
+    private Rigidbody playerRigidbody;
+
+    /*
+    BASE MOVEMENT
+    */
     [Header("Movement")]
     public float moveSpeed;
     public float maxSpeedChange;
@@ -15,25 +21,38 @@ public class PlayerMovement : MonoBehaviour
     public float airAcceleration;
     public float airDeceleration;
 
-    [Header("Jump")]
-    public float jumpForce;
-    public int maxAirJumps = 1;
+    private Vector3 moveInput;
 
+    /* 
+    GROUND DETECTION
+    */
     [Header("Ground Check")]
     //public float maxSlopeAngle = 30f;
     public float sphereRadius = 0.5f;
     public float shpereRelativeHeight = 0f;
     public float groundCheckDistance = 0.01f;
+
     private Vector3 groundDetectionHeight;
-
-    private Transform playerTransform;
-    private Rigidbody playerRigidbody;
-    private Vector2 moveInput;
-    private bool jumpRequested;
-
     private bool isGrounded;
-    private int airJumpsRemaining;
     private LayerMask notPlayerLayer;
+
+    /*
+    JUMP
+    */
+    [Header("Jump")]
+    public float jumpForce;
+    public int maxAirJumps = 1;
+    public float jumpBufferTime;
+    private float jumpBufferTimer;
+    private int airJumpsRemaining;
+
+    /*
+    DASH
+    */
+    [Header("Dash")]
+    public float dashValue; 
+
+    private bool dashRequested;   
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -49,63 +68,56 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        jumpBufferTimer -= Time.deltaTime;
     }
 
     void FixedUpdate()
     {
         Debug.Log("Is Grounded: " + isGrounded);
         Debug.Log("Velocity: " + Vector3.Magnitude(playerRigidbody.linearVelocity));
+        Debug.Log("Move Input : " + moveInput);
         GroundCheck();
         if (isGrounded)
         {
             airJumpsRemaining = maxAirJumps;
             GroundMove();
-            if (jumpRequested)
+            if (jumpBufferTimer > 0)
             {
                 GroundJump();
-                jumpRequested = false;
+                jumpBufferTimer = 0;
             }
         }
         else
         {
             AirMove();
-            if (jumpRequested && airJumpsRemaining > 0)
+            if (jumpBufferTimer > 0 && airJumpsRemaining > 0)
             {
                 AirJump();
-                jumpRequested = false;
+                jumpBufferTimer = 0;
                 airJumpsRemaining--;
             }
-        }   
+        }
+        if (dashRequested)
+        {
+            Dash();
+            dashRequested = false;
+        }
     }
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        moveInput = context.ReadValue<Vector2>();
-    }
-
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            jumpRequested = true;
-        }
-        else if (context.canceled)
-        {
-            jumpRequested = false;
-        }
-        //isJumping = context.ReadValue<float>() > 0;
+        moveInput = context.ReadValue<Vector3>();
     }
 
     public void GroundMove()
     {
-        Vector3 targetVelocity = new Vector3(moveInput.x, 0f,  moveInput.y) * moveSpeed;
+        Vector3 targetVelocity = new Vector3(moveInput.x, 0f,  moveInput.z) * moveSpeed;
         targetVelocity = playerTransform.TransformDirection(targetVelocity);
         Vector3 curentVelocity = playerRigidbody.linearVelocity;
         curentVelocity.y = 0f; // Ignore y velocity
         Vector3 velocityDif = targetVelocity - curentVelocity;
 
-        float accelRate = (Vector3.Dot(curentVelocity, targetVelocity) > 0f) ? acceleration : deceleration; // 90° 
+        float accelRate = (Vector3.Dot(curentVelocity, targetVelocity) > 0.01f) ? acceleration : deceleration; // 90° 
 
         Vector3 force = new Vector3();
         force.x = Mathf.Log(Mathf.Abs(velocityDif.x) + 1) * accelRate * Mathf.Sign(velocityDif.x);
@@ -119,10 +131,10 @@ public class PlayerMovement : MonoBehaviour
 
     public void AirMove()
     {
-        Vector3 targetVelocity = new Vector3(moveInput.x, 0f, moveInput.y) * moveSpeed;
+        Vector3 targetVelocity = new Vector3(moveInput.x, 0f, moveInput.z) * moveSpeed;
         targetVelocity = playerTransform.TransformDirection(targetVelocity);
         Vector3 curentVelocity = playerRigidbody.linearVelocity;
-        curentVelocity.y = 0f; // Ignore y velocity
+        curentVelocity.y = 0f; // Ignore y velocityforce
         Vector3 velocityDif = targetVelocity - curentVelocity;
 
         float accelRate = (Vector3.Dot(curentVelocity, targetVelocity) > 0f) ? airAcceleration : airDeceleration; // 90° 
@@ -135,6 +147,14 @@ public class PlayerMovement : MonoBehaviour
         Vector3.ClampMagnitude(force, maxSpeedChange);
 
         playerRigidbody.AddForce(force, ForceMode.VelocityChange); //ForceMode.Force, ForceMode.Acceleration, ForceMode.VelocityChange
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            jumpBufferTimer = jumpBufferTime;
+        }
     }
 
     public void GroundJump()
@@ -167,5 +187,32 @@ public class PlayerMovement : MonoBehaviour
             sphereRadius + groundCheckDistance, 
             notPlayerLayer, 
             QueryTriggerInteraction.Ignore);
+    }
+
+    public void OnDash(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            dashRequested = true;
+        }
+        else if (context.canceled)
+        {
+            dashRequested = false;
+        }
+    }
+    public void Dash()
+    {
+        Vector3 dashForce;
+        if (moveInput.magnitude < 0.1)
+        {
+            dashForce = Vector3.forward;
+        }
+        else
+        {
+            dashForce = Vector3.ClampMagnitude(moveInput, 1f);
+        }
+        dashForce *= dashValue;
+        dashForce = playerTransform.TransformDirection(dashForce);
+        playerRigidbody.AddForce(dashForce, ForceMode.Impulse);
     }
 }

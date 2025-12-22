@@ -432,15 +432,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4b374a5d34cb0a7d95932b79a4032cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  moveSpeed: 10
+  moveSpeed: 5
   maxSpeedChange: 20
-  acceleration: 0.5
+  acceleration: 0.3
   deceleration: 1
-  jumpForce: 5
-  maxAirJumps: 0
+  airAcceleration: 0.1
+  airDeceleration: 0.1
   sphereRadius: 0.5
   shpereRelativeHeight: 0
   groundCheckDistance: 0.01
+  jumpForce: 5
+  maxAirJumps: 0
+  jumpBufferTime: 0.5
+  dashValue: 15
 --- !u!54 &542985231
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -636,6 +640,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 05514d45-f1b0-4578-bba8-af4f6f6fec66
     m_ActionName: 'Player/Look[/Mouse/delta]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 542985230}
+        m_TargetAssemblyTypeName: PlayerMovement, Assembly-CSharp
+        m_MethodName: OnDash
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: e82f6f77-6591-44e8-b193-365a7a8bc8b9
+    m_ActionName: 'Player/Dash[/Keyboard/leftShift]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -1033,6 +1053,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1790129827}
+  - component: {fileID: 1790129828}
   m_Layer: 0
   m_Name: Terain
   m_TagString: Untagged
@@ -1059,6 +1080,19 @@ Transform:
   - {fileID: 617260941}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1790129828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790129826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed5c60a86e7fcc0b3bbd8ae00d2f247d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ApplyPhysicMaterialToChildren
+  physicsMaterial: {fileID: 13400000, guid: cb8283f7c03ea551fbc25fb6dbb9b4cb, type: 2}
 --- !u!1 &1852628096
 GameObject:
   m_ObjectHideFlags: 0
